@@ -1,0 +1,3 @@
+io.dbsink.connector.sink.dialect.PostgreSqlDialect$PostgreSqlDialectProvider
+io.dbsink.connector.sink.dialect.MySqlDialect$MySqlDialectProvider
+io.dbsink.connector.sink.dialect.OpengaussDialect$OpengaussDialectProvider
