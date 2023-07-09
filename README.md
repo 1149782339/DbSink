@@ -4,7 +4,7 @@ DbSink is a [Kafka Sink Connector](http://kafka.apache.org/documentation.html#co
 
 
 
-## The Advantages compared to other connectors
+## Features
 
 1.100% compatible with debezium and able to process data change event, schema change event and transaction event  without requiring any  additional transform like 'ExtractNewRecordState'.
 
@@ -21,6 +21,146 @@ DbSink is a [Kafka Sink Connector](http://kafka.apache.org/documentation.html#co
 For example, the time data type of the MySQL can be inserted into either the time data  type or the interval data type  in the postgres database.
 
 7.Support configuration of target table and column. By default, the connector uses the source table and column name as the target ones.
+
+
+
+## Connector Configuration Properties
+
+**connector.class**
+
+To use this connector, specify the name of the connector class in the `connector.class` configuration property.
+
+```
+"connector.class": "io.dbsink.connector.sink.DbSinkConnector"
+```
+
+
+
+### JDBC Group
+
+#### jdbc.username
+
+JDBC connection user.
+
+- Type: String
+- Default: null
+- Importantce: hight
+
+
+
+#### jdbc.password
+
+JDBC connection password.
+
+- Type: String
+- Default: null
+- Importantce: hight
+
+
+
+#### jdbc.url
+
+JDBC connection URL. For example: `jdbc:postgresql://localhost:5432/migration"`, `jdbc:mysql://localhost/db_name`
+
+- Type: String
+- Default: null
+- Importantce: high
+
+
+
+#### jdbc.driver.class
+
+JDBC driver class. For example: `org.postgresql.Driver`, `com.mysql.cj.jdbc.Driver`,`com.mysql.jdbc.Driver`
+
+- Type: String
+- Default: null
+- Importantce: low
+
+
+
+#### jdbc.retries.max
+
+The maximum number of retries to call JDBC interface when SQLException hanppes. The value must be a positive integer.
+
+- Type: int
+- Default: 5
+- Importantce: low
+
+
+
+#### jdbc.backoff.ms
+
+The backoff time in milliseconds between JDBC retries.
+
+- Type: long
+- Default: 3000
+- Importantce: low
+
+
+
+### Applier Group
+
+#### applier.parallel.max
+
+The Maximum number of threads to apply.
+
+- Type: int
+- Default:  cpu cores * 1.4
+- Importantce: high
+
+
+
+#### applier.transaction.enabled
+
+Whether to apply transactionally. Requires  debezium configuration properties `provide.transaction.metadata` to be true and all the incoming events with the same topic name. (use transforms)
+
+- Type: boolean
+- Default: false
+- Importantce: high
+
+
+
+#### applier.transaction.buffer.size
+
+Specifies how many transction to cache in the buffer.
+
+- Type:  int
+- Default: 50
+- Importantce: high
+
+
+
+#### applier.worker.buffer.size
+
+Specifies how many transctions that an applier worker  can cache in its buffer.
+
+- Type: int
+- Default: 100
+- Importantce: high
+
+
+
+#### table.naming.strategy
+
+Specifies the fully-qualified class name of a `TableNamingStrategy` implementation that the connector uses to resolve table names from incoming event s. DefaultTableNamingStrategy,LowCaseTableNamingStrategy,UpperCaseTableNamingStrategy are availables.
+
+- Type: class
+- Default: io.dbsink.connector.sink.naming.DefaultTableNamingStrategy
+- Importantce: high
+
+
+
+#### column.naming.strategy
+
+Specifies the fully-qualified class name of a `ColumnNamingStrategy` implementation that the connector uses to resolve column names from incoming events. DefaultColumNamingStrategy,LowCaseColumNamingStrategy,UpperCaseColumNamingStrategy are availables.
+
+- Type: class
+- Default: io.dbsink.connector.sink.naming.DefaultColumNamingStrategy
+- Importantce: high
+
+
+
+
 
 
 
@@ -79,31 +219,31 @@ note: The dependencies like jdbc drivers are not to be packaged into the jar,  y
 
 ### Oracle to Postgres
 
-| oracle                            | postgres                       | description |
-| --------------------------------- | ------------------------------ | ----------- |
-| number(n,p)                       | numeric(n,p)                   |             |
-| binary_float                      | float                          |             |
-| binary_double                     | double precision               |             |
-| integer                           | int                            |             |
-| char(n)                           | char(n)                        |             |
-| nvarchar2(n)                      | varchar(n)                     |             |
-| varchar2(n)                       | varchar(n)                     |             |
-| clob                              | text                           |             |
-| nclob                             | text                           |             |
-| blob                              | bytea                          |             |
-| raw                               | bytea                          |             |
-| long raw                          | bytea                          |             |
-| long                              | bytea                          |             |
-| date                              | timestamp(0) without time zone |             |
-| timestamp(n)                      | timestamp(n) without time zone |             |
-| timestamp(n) with time zone       | timestamp(n) with time zone    |             |
-| timestamp(n) with local time zone | timestamp(n) with time zone    |             |
-| interval year to month            | interval year to month         |             |
-| interval day to month             | interval day to month          |             |
+| oracle                            | postgres                       | description                                                  |
+| --------------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| number(n,p)                       | numeric(n,p)                   |                                                              |
+| binary_float                      | float                          |                                                              |
+| binary_double                     | double precision               |                                                              |
+| integer                           | int                            |                                                              |
+| char(n)                           | char(n)                        |                                                              |
+| nvarchar2(n)                      | varchar(n)                     |                                                              |
+| varchar2(n)                       | varchar(n)                     |                                                              |
+| clob                              | text                           |                                                              |
+| nclob                             | text                           |                                                              |
+| blob                              | bytea                          |                                                              |
+| raw                               | bytea                          |                                                              |
+| long raw                          | bytea                          |                                                              |
+| long                              | bytea                          |                                                              |
+| date                              | timestamp(0) without time zone |                                                              |
+| timestamp(n)                      | timestamp(n) without time zone | Numbers exceeding 6 digits of the Decimal separator will be truncated |
+| timestamp(n) with time zone       | timestamp(n) with time zone    | Numbers exceeding 6 digits of the Decimal separator will be truncated |
+| timestamp(n) with local time zone | timestamp(n) with time zone    | Numbers exceeding 6 digits of the Decimal separator will be truncated |
+| interval year to month            | interval year to month         |                                                              |
+| interval day to month             | interval day to month          |                                                              |
 
 
 
-# Usage
+# Best Practices
 
 Here are some examples to introduce the usage method and its application scenarios
 
