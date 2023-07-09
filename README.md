@@ -24,42 +24,82 @@ For example, the time data type of the MySQL can be inserted into either the tim
 
 
 
-## Data type 
+## Build guidance
+
+jdk version: >=11
+
+maven: >=3.0
+
+```
+mvn clean package -Dmaven.test.skip=true
+```
+
+
+
+note: The dependencies like jdbc drivers are not to be packaged into the jar,  you need to manually put them to in the plugin path of kafka connect.
+
+
+
+## Data type mapping
 
 ### MySQL to Postgres
 
+| mysql        | postgres                          | description                                                  |
+| ------------ | :-------------------------------- | ------------------------------------------------------------ |
+| float(n)     | float(n)                          | Float in postgres is a standard type while mysql is not, so this may be errors |
+| float(n,p)   | float(n) or decimal(n,p)          | No fully equivalent data type, so may be errors              |
+| double(n,p)  | double precision or decimal(n,p)  | No fully equivalent data type, so may be errors              |
+| double       | double precision                  | Double in postgres is a standard type while mysql is not, so may be errors |
+| decimal(n,p) | decimal(n,p)                      |                                                              |
+| bigint       | bigint                            |                                                              |
+| mediumint    | int                               |                                                              |
+| int          | int                               |                                                              |
+| smallint     | smallint                          |                                                              |
+| tinyint      | smallint                          |                                                              |
+| timestamp(n) | timestamp(n) with time zone       | Ensure that MySQL and Postgres time zones are the same, in which case no error. |
+| datetime(n)  | timestamp(n) without time zone    |                                                              |
+| time(n)      | time(n) or interval day to second | 0-23:59:59.999999: time(n) ---> time(n). otherwise time(n) --> interval day to second |
+| year         | smallint or interval year         |                                                              |
+| bit(n)       | bit(m) m>=n                       |                                                              |
+| bit(1)       | bit(1) or bool                    |                                                              |
+| tinyint(1)   | bool                              |                                                              |
+| binary(n)    | bytea                             |                                                              |
+| blob         | bytea                             |                                                              |
+| tinyblob     | bytea                             |                                                              |
+| mediumblob   | bytea                             |                                                              |
+| longblob     | bytea                             |                                                              |
+| char(n)      | char(n)                           |                                                              |
+| varchar(n)   | varchar(n)                        |                                                              |
+| tinytext     | text                              |                                                              |
+| text         | text                              |                                                              |
+| mediumtext   | text                              |                                                              |
+| json         | json                              |                                                              |
 
 
-| mysql data type | postgres data type                | description                                                  |
-| --------------- | :-------------------------------- | ------------------------------------------------------------ |
-| float(n)        | float(n)                          | Float in postgres is a standard type while mysql is not, so this may be errors |
-| float(n,p)      | float(n) or decimal(n,p)          | No fully equivalent data type, so may be errors              |
-| double(n,p)     | double precision or decimal(n,p)  | No fully equivalent data type, so may be errors              |
-| double          | double precision                  | Double in postgres is a standard type while mysql is not, so may be errors |
-| decimal(n,p)    | decimal(n,p)                      |                                                              |
-| bigint          | bigint                            |                                                              |
-| mediumint       | int                               |                                                              |
-| int             | int                               |                                                              |
-| smallint        | smallint                          |                                                              |
-| tinyint         | smallint                          |                                                              |
-| timestamp(n)    | timestamp(n) with time zone       | Ensure that MySQL and Postgres time zones are the same, in which case no error. |
-| datetime(n)     | timestamp(n) without time zone    |                                                              |
-| time(n)         | time(n) or interval day to second | 0-23:59:59.999999: time(n) ---> time(n). otherwise time(n) --> interval day to second |
-| year            | smallint or interval year         |                                                              |
-| bit(n)          | bit(m) m>=n                       |                                                              |
-| bit(1)          | bit(1) or bool                    |                                                              |
-| tinyint(1)      | bool                              |                                                              |
-| binary(n)       | bytea                             |                                                              |
-| blob            | bytea                             |                                                              |
-| tinyblob        | bytea                             |                                                              |
-| mediumblob      | bytea                             |                                                              |
-| longblob        | bytea                             |                                                              |
-| char(n)         | char(n)                           |                                                              |
-| varchar(n)      | varchar(n)                        |                                                              |
-| tinytext        | text                              |                                                              |
-| text            | text                              |                                                              |
-| mediumtext      | text                              |                                                              |
-| json            | json                              |                                                              |
+
+### Oracle to Postgres
+
+| oracle                            | postgres                       | description |
+| --------------------------------- | ------------------------------ | ----------- |
+| number(n,p)                       | numeric(n,p)                   |             |
+| binary_float                      | float                          |             |
+| binary_double                     | double precision               |             |
+| integer                           | int                            |             |
+| char(n)                           | char(n)                        |             |
+| nvarchar2(n)                      | varchar(n)                     |             |
+| varchar2(n)                       | varchar(n)                     |             |
+| clob                              | text                           |             |
+| nclob                             | text                           |             |
+| blob                              | bytea                          |             |
+| raw                               | bytea                          |             |
+| long raw                          | bytea                          |             |
+| long                              | bytea                          |             |
+| date                              | timestamp(0) without time zone |             |
+| timestamp(n)                      | timestamp(n) without time zone |             |
+| timestamp(n) with time zone       | timestamp(n) with time zone    |             |
+| timestamp(n) with local time zone | timestamp(n) with time zone    |             |
+| interval year to month            | interval year to month         |             |
+| interval day to month             | interval day to month          |             |
 
 
 
