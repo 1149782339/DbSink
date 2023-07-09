@@ -5,7 +5,7 @@
  */
 package io.dbsink.connector.sink.jdbc;
 
-import io.dbsink.connector.sink.binding.ColumnFilter;
+import io.dbsink.connector.sink.filter.ColumnFilter;
 import io.dbsink.connector.sink.dialect.CommonDatabaseDialect;
 import io.dbsink.connector.sink.event.DataChangeEvent;
 import io.dbsink.connector.sink.relation.ColumnDefinition;

@@ -3,7 +3,7 @@
  *  This source code is licensed under the Apache License Version 2.0, available
  *  at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.dbsink.connector.sink.binding;
+package io.dbsink.connector.sink.filter;
 
 import io.dbsink.connector.sink.relation.ColumnDefinition;
 

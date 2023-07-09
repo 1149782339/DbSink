@@ -6,7 +6,7 @@
 package io.dbsink.connector.sink.dialect;
 
 import io.dbsink.connector.sink.ConnectorConfig;
-import io.dbsink.connector.sink.binding.ColumnFilter;
+import io.dbsink.connector.sink.filter.ColumnFilter;
 import io.dbsink.connector.sink.jdbc.PreparedStatementBinder;
 import io.dbsink.connector.sink.jdbc.StatementBinder;
 import io.dbsink.connector.sink.naming.ColumnNamingStrategy;
