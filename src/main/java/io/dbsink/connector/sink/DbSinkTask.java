@@ -55,6 +55,7 @@ public class DbSinkTask extends SinkTask {
 
     @Override
     public void start(Map<String, String> props) {
+        Banner.print();
         config = new ConnectorConfig(props);
         isRunning = true;
         context = () -> isRunning;
