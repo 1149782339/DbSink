@@ -369,6 +369,9 @@ public abstract class CommonDatabaseDialect implements DatabaseDialect {
         final String schema = tableId.getSchema();
         final String table = tableId.getTable();
         try (ResultSet resultSet = databaseMetaData.getTables(catalog, schema, table, new String[] {"TABLE"})) {
+            // Some drivers like mysql use sql 'table like '%xxx%'' 'schema like '%xxx%''
+            // so it may include similar table names, schema names,
+            // we need filter them.
             while (resultSet.next()) {
                 if (Objects.equals(catalog, resultSet.getObject(1))
                     && Objects.equals(schema, resultSet.getObject(2))
