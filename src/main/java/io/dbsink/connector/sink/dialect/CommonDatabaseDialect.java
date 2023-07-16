@@ -59,19 +59,19 @@ public abstract class CommonDatabaseDialect implements DatabaseDialect {
     /**
      * Jdbc url
      */
-    protected final String jdbcUrl;
+    protected final String connectionUrl;
     /**
      * Jdbc username
      */
-    protected final String jdbcUsername;
+    protected final String connectionUsername;
     /**
      * Jdbc password
      */
-    protected final String jdbcPassword;
+    protected final String connectionPassword;
     /**
      * Jdbc driver class
      */
-    protected final String jdbcDriverClass;
+    protected final String connectionDriverClass;
     /**
      * Time zone
      */
@@ -89,10 +89,10 @@ public abstract class CommonDatabaseDialect implements DatabaseDialect {
 
     public CommonDatabaseDialect(ConnectorConfig config) {
         this.columnNamingStrategy = config.getColumnNamingStrategy();
-        this.jdbcUrl = config.getJdbcUrl();
-        this.jdbcUsername = config.getJdbcUsername();
-        this.jdbcPassword = config.getJdbcPassword();
-        this.jdbcDriverClass = config.getJdbcDriverClass();
+        this.connectionUrl = config.getConnectionUrl();
+        this.connectionUsername = config.getConnectionUsername();
+        this.connectionPassword = config.getConnectionPassword();
+        this.connectionDriverClass = config.getConnectionDriverClass();
         // Debezium normalizes timestamps from source data
         // So we get a timezone with UTC
         this.timeZone = TimeZone.getTimeZone(ZoneOffset.UTC);
@@ -451,15 +451,15 @@ public abstract class CommonDatabaseDialect implements DatabaseDialect {
     @Override
     public Connection getConnection() throws SQLException {
         try {
-            if (!StringUtil.isEmpty(jdbcDriverClass)) {
-                Class.forName(jdbcDriverClass);
+            if (!StringUtil.isEmpty(connectionDriverClass)) {
+                Class.forName(connectionDriverClass);
             }
             Properties properties = getJdbcProperties();
-            properties.put("user", jdbcUsername);
-            properties.put("password", jdbcPassword);
-            return DriverManager.getConnection(jdbcUrl, properties);
+            properties.put("user", connectionUsername);
+            properties.put("password", connectionPassword);
+            return DriverManager.getConnection(connectionUrl, properties);
         } catch (ClassNotFoundException e) {
-            throw new ConnectException("failed to load jdbc driver class \"" + jdbcDriverClass + "\"", e);
+            throw new ConnectException("failed to load jdbc driver class \"" + connectionDriverClass + "\"", e);
         }
     }
 

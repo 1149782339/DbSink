@@ -7,9 +7,6 @@ package io.dbsink.connector.sink.connection;
 
 import io.dbsink.connector.sink.ConnectorConfig;
 import io.dbsink.connector.sink.dialect.DatabaseDialect;
-import io.dbsink.connector.sink.event.ChangeEvent;
-import io.dbsink.connector.sink.event.DataChangeEvent;
-import io.dbsink.connector.sink.event.SchemaChangeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

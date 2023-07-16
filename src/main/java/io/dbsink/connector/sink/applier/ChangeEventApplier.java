@@ -59,11 +59,9 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
 
     private final boolean applyDDLEnabled;
 
-    private DatabaseDialect databaseDialect;
 
     public ChangeEventApplier(Applier internalApplier, ConnectorConfig config) {
         this.applier = internalApplier;
-        this.databaseDialect = DatabaseDialects.create(config);
         this.tableNamingStrategy = config.getTableNamingStrategy();
         this.columnNamingStrategy = config.getColumnNamingStrategy();
         this.applyDDLEnabled = config.getApplierDDLEnabled();
@@ -143,7 +141,7 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
         String catalog = struct.schema().field("db") != null ? struct.getString("db") : null;
         String schema = struct.schema().field("schema") != null ? struct.getString("schema") : null;
         String table = struct.schema().field("table") != null ? struct.getString("table") : null;
-        return databaseDialect.resolveTableId(new TableId(catalog, schema, tableNamingStrategy.resolveTableName(table)));
+        return new TableId(catalog, schema, tableNamingStrategy.resolveTableName(table));
     }
 
     private String getTransactionId(Struct value) {

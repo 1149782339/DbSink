@@ -5,6 +5,11 @@
  */
 package io.dbsink.connector.sink.util;
 
+import org.apache.kafka.connect.data.Schema;
+import org.bson.types.Binary;
+
+import java.nio.ByteBuffer;
+
 /**
  * String util
  *
@@ -34,5 +39,23 @@ public class StringUtil {
      */
     public static boolean isEmpty(String str) {
         return str == null || str.isEmpty();
+    }
+
+    public static String toString(Object value, Schema schema) {
+        if (value == null) {
+            return null;
+        }
+        switch (schema.type()) {
+            case STRING:
+                return (String) value;
+            case FLOAT32:
+            case FLOAT64:
+            case BOOLEAN:
+            case INT32:
+            case INT16:
+            case INT8:
+                return value.toString();
+        }
+        return value.toString();
     }
 }

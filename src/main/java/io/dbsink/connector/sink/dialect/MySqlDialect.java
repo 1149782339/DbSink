@@ -13,7 +13,6 @@ import io.dbsink.connector.sink.sql.SQLState;
 import io.dbsink.connector.sink.util.StringUtil;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -133,12 +132,10 @@ public class MySqlDialect extends CommonDatabaseDialect {
     }
 
     @Override
-    public Connection getConnection() throws SQLException {
+    protected Properties getJdbcProperties() {
         Properties properties = new Properties();
-        properties.put("username", jdbcUsername);
-        properties.put("password", jdbcPassword);
         properties.put("serverTimezone", "GMT");
-        return DriverManager.getConnection(jdbcUrl, properties);
+        return properties;
     }
 
     public static class MySqlDialectProvider implements DatabaseDialectProvider {

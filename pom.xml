@@ -42,6 +42,17 @@
             <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.12.12</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>8.8.2</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/net.openhft/zero-allocation-hashing -->
         <dependency>
             <groupId>net.openhft</groupId>

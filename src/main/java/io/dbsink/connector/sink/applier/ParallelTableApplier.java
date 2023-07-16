@@ -57,9 +57,10 @@ public class ParallelTableApplier implements Applier<Collection<ChangeEvent>> {
         this.completionService = new ExecutorCompletionService<>(executorService);
         this.appliers = new ArrayList<>(config.getApplierParallelMax());
         for (int i = 0; i < config.getApplierParallelMax(); i++) {
-            this.appliers.add(new JdbcApplier(context, config));
+            this.appliers.add(ApplierFactory.createTableApplier(context, config));
         }
     }
+
 
     @Override
     public void prepare(TaskContext taskContext) {
