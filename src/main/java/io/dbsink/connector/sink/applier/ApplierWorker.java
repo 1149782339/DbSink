@@ -35,7 +35,7 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
 
     private final ParallelDispatcher dispatcher;
 
-    private final Applier jdbcApplier;
+    private final Applier tableApplier;
 
     private Map<TopicPartition, OffsetAndMetadata> offsets;
 
@@ -48,7 +48,7 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
         super(context, errorHandler);
         this.applierEvents = new ArrayBlockingQueue<>(config.getApplierWorkerBufferSize());
         this.dispatcher = dispatcher;
-        this.jdbcApplier = new JdbcApplier(context, config);
+        this.tableApplier = ApplierFactory.createTableApplier(context, config);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
             ApplierEvent applierEvent = applierEvents.take();
             Long sequenceNumber = applierEvent.getSequenceNumber();
             if (applierEvent.hasDataChangeEvent()) {
-                jdbcApplier.apply(applierEvent.getEvents());
+                tableApplier.apply(applierEvent.getEvents());
             }
             Long minSequenceNumber = dispatcher.updateSequenceNoAndGet(sequenceNumber);
             // Only the applier worker who has applied the transaction with the minimum sequence number
@@ -111,7 +111,7 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
      */
     @Override
     public void prepare(TaskContext taskContext) {
-        jdbcApplier.prepare(taskContext);
+        tableApplier.prepare(taskContext);
         offsets = taskContext.getOffsets();
     }
 
@@ -135,6 +135,6 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
      */
     @Override
     public void release() {
-        jdbcApplier.release();
+        tableApplier.release();
     }
 }

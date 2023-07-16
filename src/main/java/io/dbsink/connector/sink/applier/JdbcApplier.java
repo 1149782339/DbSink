@@ -23,8 +23,7 @@ import io.dbsink.connector.sink.relation.TableDefinition;
 import io.dbsink.connector.sink.relation.TableDefinitions;
 import io.dbsink.connector.sink.relation.TableId;
 import io.dbsink.connector.sink.sql.SQLState;
-import io.dbsink.connector.sink.trigger.DelayTrigger;
-import io.dbsink.connector.sink.trigger.Trigger;
+import io.dbsink.connector.sink.util.TimeTracker;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -34,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -53,6 +51,8 @@ import static io.dbsink.connector.sink.sql.SQLState.ERR_RELATION_NOT_EXISTS_ERRO
 public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcApplier.class);
 
+    private static final int MAX_UPSERT_ELAPSED_TIME = 120000;
+
     private final DatabaseDialect databaseDialect;
 
     private final JdbcConnection jdbcConnection;
@@ -60,8 +60,6 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
     private final TableDefinitions tableDefinitions;
 
     private final List<DataChangeEvent> events;
-
-    private final Trigger delayTrigger;
 
     private final ConnectorConfig config;
 
@@ -79,12 +77,14 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
 
     private boolean enableUpsertMode = false;
 
+    private final TimeTracker timeTracker;
+
     public JdbcApplier(ConnectorContext context, ConnectorConfig config) {
         this.context = context;
         this.config = config;
         this.databaseDialect = DatabaseDialects.create(config);
         this.events = new ArrayList<>();
-        this.delayTrigger = new DelayTrigger(Duration.ofSeconds(120), new SQLExceptionTrigger());
+        this.timeTracker = new TimeTracker();
         this.tableDefinitions = new TableDefinitions(databaseDialect);
         this.jdbcConnection = new JdbcConnection(databaseDialect, config);
     }
@@ -95,9 +95,10 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
     }
 
     private void handleDataChangeEvent(Connection connection, DataChangeEvent event) throws SQLException {
-        final TableDefinition tableDefinition = tableDefinitions.get(connection, event.getTableId());
+        final TableId tableId = databaseDialect.resolveTableId(event.getTableId());
+        final TableDefinition tableDefinition = tableDefinitions.get(connection, tableId);
         if (tableDefinition == null) {
-            throw new ConnectException("table \"" + event.getTableId() + "\" doesn't exist!");
+            throw new ConnectException("table \"" + tableId + "\" doesn't exist!");
         }
         Operation operation;
         if (enableUpsertMode && (event.getOperation() == Operation.CREATE || event.getOperation() == Operation.READ)) {
@@ -105,10 +106,16 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
         } else {
             operation = event.getOperation();
         }
-        if (!operation.equals(this.operation) || !event.getTableId().equals(tableId)) {
+        if (this.operation == null) {
+            this.operation = event.getOperation();
+        }
+        if (this.tableId == null) {
+            this.tableId = tableId;
+        }
+        if (!operation.equals(this.operation) || !tableId.equals(this.tableId)) {
             flush(true);
             this.operation = operation;
-            tableId = event.getTableId();
+            this.tableId = tableId;
         }
         if (preparedStatement == null) {
             FieldsMetaData fieldsMetaData = event.getFieldsMetaData();
@@ -133,16 +140,17 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
      */
     @Override
     public synchronized void apply(Collection<ChangeEvent> events) throws ApplierException {
-        for (int retry = 0; retry < config.getJdbcRetriesMax(); retry++) {
+        for (int retry = 0; retry < config.getConnectionRetriesMax(); retry++) {
             try {
                 doApply(events);
                 return;
             } catch (SQLException e) {
-                if (retry < config.getJdbcRetriesMax() - 1) {
+                if (retry < config.getConnectionRetriesMax() - 1) {
                     LOGGER.warn("failed to apply change events, retry to apply", e);
                     try {
-                        Thread.sleep(config.getJdbcBackoff());
+                        Thread.sleep(config.getConnectionBackoff());
                     } catch (InterruptedException ex) {
+                        Thread.interrupted();
                         if (!context.isRunning()) {
                             throw new ApplierException("connector is closed!");
                         }
@@ -172,7 +180,9 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
             }
             flush(true);
             connection.commit();
-            delayTrigger.reset();
+            if (enableUpsertMode && timeTracker.isTimeElapsed(MAX_UPSERT_ELAPSED_TIME)) {
+                enableUpsertMode = false;
+            }
         } catch (SQLException e) {
             rollback(connection);
             if (!ignorable(e)) {
@@ -194,8 +204,8 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
     private boolean ignorable(SQLException e) {
         SQLState sqlState = databaseDialect.resolveSQLState(e.getSQLState());
         if (sqlState == SQLState.ERR_DUP_KEY) {
-            // when duplicate key sql exception happens, set the trigger
-            delayTrigger.set();
+            // when duplicate key sql exception happens, switch to upsert mode
+            enableUpsertMode = true;
             return false;
         }
         if (sqlState == ERR_RELATION_EXISTS_ERROR || sqlState == ERR_RELATION_NOT_EXISTS_ERROR) {
@@ -255,38 +265,6 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
                 return databaseDialect.buildDeleteStatement(fieldsMetaData, tableDefinition);
             default:
                 throw new IllegalArgumentException("not implement!");
-        }
-    }
-
-    /**
-     * trigger used to handle sql exception {@link SQLException}
-     * switch to upsert mode from insert mode when duplicate key
-     * sql exception happened
-     *
-     * @author: Wang Wei
-     * @time: 2023-06-25
-     */
-    private class SQLExceptionTrigger implements Trigger {
-        /**
-         * Enable upsert mode when duplicate key sql exception {@link SQLException}
-         *
-         * @author: Wang Wei
-         * @time: 2023-06-25
-         */
-        @Override
-        public void set() {
-            enableUpsertMode = true;
-        }
-
-        /**
-         * Disable upsert mode when no more sql exception happens,
-         *
-         * @author: Wang Wei
-         * @time: 2023-06-25
-         */
-        @Override
-        public void reset() {
-            enableUpsertMode = false;
         }
     }
 }

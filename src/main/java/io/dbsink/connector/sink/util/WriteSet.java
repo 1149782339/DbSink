@@ -106,7 +106,11 @@ public class WriteSet {
                 dataChangeEvent.getBeforeValues() : dataChangeEvent.getAfterValues();
             for (String fieldName : primaryKeyFields) {
                 Object object = values.get(fieldName);
-                row.add(object.toString());
+                String str = StringUtil.toString(object, fieldsMetaData.getFieldSchema(fieldName));
+                if (str == null) {
+                    continue;
+                }
+                row.add(str);
             }
             writeSet.add(hashUtil.getHash(String.join(HASH_DELIMITER, row)));
         }

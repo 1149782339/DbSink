@@ -10,6 +10,7 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 
 import java.lang.ref.PhantomReference;
+import java.time.ZoneId;
 import java.util.Map;
 
 /**
@@ -23,28 +24,28 @@ public class ConnectorConfig extends AbstractConfig {
 
     private final static String DATABASE_DIALECT_NAME = "database.dialect.name";
 
-    private static final String JDBC_GROUP = "Jdbc";
+    private static final String CONNECTION_GROUP = "Connection";
 
-    private final static String JDBC_USERNAME = "jdbc.username";
+    private final static String CONNECTION_USERNAME = "connection.username";
 
-    private final static String JDBC_PASSWORD = "jdbc.password";
+    private final static String CONNECTION_PASSWORD = "connection.password";
 
-    private final static String JDBC_URL = "jdbc.url";
+    private final static String CONNECTION_URL = "connection.url";
 
-    private static final String JDBC_URL_DOC = "jdbc connection url";
+    private static final String CONNECTION_URL_DOC = "connection connection url";
 
-    private static final String JDBC_URL_DISPLAY = "jdbc connection url";
+    private static final String CONNECTION_URL_DISPLAY = "connection connection url";
 
-    private final static String JDBC_DRIVER_CLASS = "jdbc.driver.class";
+    private final static String CONNECTION_DRIVER_CLASS = "connection.driver.class";
 
-    private final static String JDBC_RETRIES_MAX = "jdbc.retries.max";
+    private final static String CONNECTION_RETRIES_MAX = "connection.retries.max";
 
-    private final static int JDBC_RETRIES_MAX_DEFAULT = 5;
+    private final static int CONNECTION_RETRIES_MAX_DEFAULT = 5;
 
 
-    private final static String JDBC_BACKOFF_MS = "jdbc.backoff.ms";
+    private final static String CONNECTION_BACKOFF_MS = "connection.backoff.ms";
 
-    private final static int JDBC_BACKOFF_MS_DEFAULT = 3000;
+    private final static int CONNECTION_BACKOFF_MS_DEFAULT = 3000;
 
     private static final String APPLIER_GROUP = "applier";
 
@@ -68,177 +69,181 @@ public class ConnectorConfig extends AbstractConfig {
 
     private static int TRANSACTION_BUFFER_SIZE_DEFAULT = 20;
 
+    private static final String APPLIER_TIMEZONE = "applier.timezone";
+
+    private static final String APPLIER_TIMEZONE_DEFAULT = "UTC";
+
     private static String TABLE_NAMING_STRATEGY = "table.naming.strategy";
 
     private static String COLUMN_NAMING_STRATEGY = "column.naming.strategy";
 
     public final static ConfigDef CONFIG_DEF = new ConfigDef()
         .define(
-            JDBC_URL,
+            CONNECTION_URL,
             ConfigDef.Type.STRING,
             ConfigDef.NO_DEFAULT_VALUE,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             1,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
-            JDBC_USERNAME,
+            CONNECTION_USERNAME,
             ConfigDef.Type.STRING,
             ConfigDef.NO_DEFAULT_VALUE,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             2,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
-            JDBC_PASSWORD,
+            CONNECTION_PASSWORD,
             ConfigDef.Type.STRING,
             ConfigDef.NO_DEFAULT_VALUE,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             3,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
-            JDBC_DRIVER_CLASS,
+            CONNECTION_DRIVER_CLASS,
             ConfigDef.Type.STRING,
             ConfigDef.NO_DEFAULT_VALUE,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             3,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
-            JDBC_RETRIES_MAX,
+            CONNECTION_RETRIES_MAX,
             ConfigDef.Type.INT,
-            JDBC_RETRIES_MAX_DEFAULT,
+            CONNECTION_RETRIES_MAX_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             3,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
-            JDBC_BACKOFF_MS,
+            CONNECTION_BACKOFF_MS,
             ConfigDef.Type.INT,
-            JDBC_BACKOFF_MS_DEFAULT,
+            CONNECTION_BACKOFF_MS_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
-            JDBC_GROUP,
+            CONNECTION_URL_DOC,
+            CONNECTION_GROUP,
             3,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             DATABASE_DIALECT_NAME,
             ConfigDef.Type.STRING,
             ConfigDef.NO_DEFAULT_VALUE,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             DATABASE_DIALECT_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             APPLIER_PARALLEL_MAX,
             ConfigDef.Type.INT,
             APPLIER_PARALLEL_MAX_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             APPLIER_TRANSACTION_BUFFER_SIZE,
             ConfigDef.Type.INT,
             TRANSACTION_BUFFER_SIZE_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             APPLIER_TRANSACTION_ENABLED,
             ConfigDef.Type.BOOLEAN,
             APPLIER_TRANSACTION_ENABLED_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             APPLIER_DDL_ENABLED,
             ConfigDef.Type.BOOLEAN,
             APPLIER_DDL_ENABLED_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
        .define(
             APPLIER_WORKER_BUFFER_SIZE,
             ConfigDef.Type.INT,
             APPLIER_WORKER_BUFFER_SIZE_DEFAULT,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
            4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             TABLE_NAMING_STRATEGY,
             ConfigDef.Type.CLASS,
             DefaultTableNamingStrategy.class,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         )
         .define(
             COLUMN_NAMING_STRATEGY,
             ConfigDef.Type.CLASS,
             DefaultColumnNamingStrategy.class,
             ConfigDef.Importance.HIGH,
-            JDBC_URL_DOC,
+            CONNECTION_URL_DOC,
             APPLIER_GROUP,
             4,
             ConfigDef.Width.LONG,
-            JDBC_URL_DISPLAY
+            CONNECTION_URL_DISPLAY
         );
     //RELATION_NAMING_STRATEGY
-    private final String jdbcUrl;
+    private final String connectionUrl;
 
-    private final String jdbcUsername;
+    private final String connectionUsername;
 
-    private final String jdbcPassword;
+    private final String connectionPassword;
 
-    private final String jdbcDriverClass;
+    private final String connectionDriverClass;
 
-    private final int jdbcRetriesMax;
+    private final int connectionRetriesMax;
 
-    private final int jdbcBackoff;
+    private final int connectionBackoff;
 
     private final String databaseDialectName;
 
@@ -258,44 +263,44 @@ public class ConnectorConfig extends AbstractConfig {
 
     public ConnectorConfig(Map<?, ?> originals) {
         super(CONFIG_DEF, originals);
-        jdbcUrl = getString(JDBC_URL);
-        jdbcUsername = getString(JDBC_USERNAME);
-        jdbcPassword = getString(JDBC_PASSWORD);
+        connectionUrl = getString(CONNECTION_URL);
+        connectionUsername = getString(CONNECTION_USERNAME);
+        connectionPassword = getString(CONNECTION_PASSWORD);
         databaseDialectName = getString(DATABASE_DIALECT_NAME);
-        jdbcDriverClass = getString(JDBC_DRIVER_CLASS);
-        jdbcRetriesMax = getInt(JDBC_RETRIES_MAX);
+        connectionDriverClass = getString(CONNECTION_DRIVER_CLASS);
+        connectionRetriesMax = getInt(CONNECTION_RETRIES_MAX);
         transactionBufferSize = getInt(APPLIER_TRANSACTION_BUFFER_SIZE);
         applierParallel = getInt(APPLIER_PARALLEL_MAX);
         transactionEnabled = getBoolean(APPLIER_TRANSACTION_ENABLED);
         applierDDLEnabled = getBoolean(APPLIER_DDL_ENABLED);
         tableNamingStrategy = getConfiguredInstance(TABLE_NAMING_STRATEGY, TableNamingStrategy.class);
         columnNamingStrategy = getConfiguredInstance(COLUMN_NAMING_STRATEGY, ColumnNamingStrategy.class);
-        jdbcBackoff = getInt(JDBC_BACKOFF_MS);
+        connectionBackoff = getInt(CONNECTION_BACKOFF_MS);
         applierWorkerBufferSize = getInt(APPLIER_WORKER_BUFFER_SIZE);
     }
 
-    public String getJdbcUrl() {
-        return jdbcUrl;
+    public String getConnectionUrl() {
+        return connectionUrl;
     }
 
-    public String getJdbcUsername() {
-        return jdbcUsername;
+    public String getConnectionUsername() {
+        return connectionUsername;
     }
 
-    public String getJdbcPassword() {
-        return jdbcPassword;
+    public String getConnectionPassword() {
+        return connectionPassword;
     }
 
-    public String getJdbcDriverClass() {
-        return jdbcDriverClass;
+    public String getConnectionDriverClass() {
+        return connectionDriverClass;
     }
 
-    public int getJdbcRetriesMax() {
-        return jdbcRetriesMax;
+    public int getConnectionRetriesMax() {
+        return connectionRetriesMax;
     }
 
-    public int getJdbcBackoff() {
-        return jdbcBackoff;
+    public int getConnectionBackoff() {
+        return connectionBackoff;
     }
 
     public String getDatabaseDialectName() {
