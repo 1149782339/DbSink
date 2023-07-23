@@ -5,6 +5,8 @@
  */
 package io.dbsink.connector.sink.naming;
 
+import io.dbsink.connector.sink.relation.TableId;
+
 /**
  * Default  table naming strategy without any changes
  *
@@ -20,7 +22,7 @@ public class DefaultTableNamingStrategy implements TableNamingStrategy {
      * @time: 2023-06-24
      */
     @Override
-    public String resolveTableName(String table) {
-        return table;
+    public TableId resolveTableId(TableId tableId) {
+        return tableId;
     }
 }

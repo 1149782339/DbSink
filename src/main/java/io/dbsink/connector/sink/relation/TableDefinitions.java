@@ -62,4 +62,13 @@ public class TableDefinitions {
         tableDefinitionCache.put(tableId, tableDefinition);
         return tableDefinition;
     }
+
+    public synchronized void refresh(Connection connection, TableId tableId) throws SQLException {
+        tableDefinitionCache.remove(tableId);
+        TableDefinition tableDefinition = databaseDialect.readTable(connection, tableId);
+        if (tableDefinition == null) {
+            return;
+        }
+        tableDefinitionCache.put(tableId, tableDefinition);
+    }
 }

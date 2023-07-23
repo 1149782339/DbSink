@@ -5,6 +5,7 @@
  */
 package io.dbsink.connector.sink.event;
 
+import io.dbsink.connector.sink.dialect.DatabaseType;
 import io.dbsink.connector.sink.relation.FieldsMetaData;
 import io.dbsink.connector.sink.relation.TableId;
 
@@ -78,6 +79,8 @@ public class DataChangeEvent extends ChangeEvent {
 
         private FieldsMetaData fieldsMetaData;
 
+        private DatabaseType databaseType;
+
         private Builder() {
         }
 
@@ -128,6 +131,11 @@ public class DataChangeEvent extends ChangeEvent {
             return this;
         }
 
+        public Builder databaseType(DatabaseType databaseType) {
+            this.databaseType = databaseType;
+            return this;
+        }
+
         public DataChangeEvent build() {
             DataChangeEvent dataChangeEvent = new DataChangeEvent();
             dataChangeEvent.fieldsMetaData = this.fieldsMetaData;
@@ -139,6 +147,7 @@ public class DataChangeEvent extends ChangeEvent {
             dataChangeEvent.afterValues = this.afterValues;
             dataChangeEvent.topic = this.topic;
             dataChangeEvent.transactionId = this.transactionId;
+            dataChangeEvent.databaseType = this.databaseType;
             return dataChangeEvent;
         }
     }

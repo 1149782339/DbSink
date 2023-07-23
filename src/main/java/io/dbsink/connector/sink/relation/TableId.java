@@ -26,10 +26,13 @@ public class TableId implements ExpressibleObject {
     private String schema;
     private String table;
 
+    private final String id;
+
     public TableId(String catalog, String schema, String table) {
         this.catalog = catalog;
         this.schema = schema;
         this.table = table;
+        this.id = tableId(catalog, schema, table);
     }
     public String getCatalog() {
         return catalog;
@@ -64,6 +67,35 @@ public class TableId implements ExpressibleObject {
         }
     }
 
+    public TableId toQuoted(char quotingChar) {
+        String catalogName = null;
+        if (this.catalog != null && !this.catalog.isEmpty()) {
+            catalogName = StringUtil.quote(this.catalog, quotingChar);
+        }
+
+        String schemaName = null;
+        if (this.schema != null && !this.schema.isEmpty()) {
+            schemaName = StringUtil.quote(this.schema, quotingChar);
+        }
+
+        return new TableId(catalogName, schemaName, StringUtil.quote(this.table, quotingChar));
+    }
+
+    private static String tableId(String catalog, String schema, String table) {
+        if (catalog == null || catalog.length() == 0) {
+            if (schema == null || schema.length() == 0) {
+                return table;
+            }
+            return schema + "." + table;
+        }
+        if (schema == null || schema.length() == 0) {
+            return catalog + "." + table;
+        }
+        return catalog + "." + schema + "." + table;
+    }
+    public String identifier() {
+        return id;
+    }
 
     @Override
     public boolean equals(Object o) {

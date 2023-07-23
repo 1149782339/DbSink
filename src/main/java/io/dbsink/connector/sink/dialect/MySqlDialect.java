@@ -132,6 +132,11 @@ public class MySqlDialect extends CommonDatabaseDialect {
     }
 
     @Override
+    public DatabaseType databaseType() {
+        return DatabaseType.MYSQL;
+    }
+
+    @Override
     protected Properties getJdbcProperties() {
         Properties properties = new Properties();
         properties.put("serverTimezone", "GMT");

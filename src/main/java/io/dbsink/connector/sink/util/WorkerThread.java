@@ -80,7 +80,7 @@ public abstract class WorkerThread implements Runnable {
     public final void run() {
         try {
             execute();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (isStopping) {
                 LOGGER.trace("Worker thread is interrupted", e);
             } else {

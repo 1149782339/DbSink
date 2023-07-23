@@ -9,6 +9,7 @@ import io.dbsink.connector.sink.ConnectorConfig;
 import io.dbsink.connector.sink.context.TaskContext;
 import io.dbsink.connector.sink.dialect.DatabaseDialect;
 import io.dbsink.connector.sink.dialect.DatabaseDialects;
+import io.dbsink.connector.sink.dialect.DatabaseType;
 import io.dbsink.connector.sink.event.ChangeEvent;
 import io.dbsink.connector.sink.event.DataChangeEvent;
 import io.dbsink.connector.sink.event.Operation;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -74,6 +76,9 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
 
     @Override
     public void apply(Collection<SinkRecord> records) throws ApplierException {
+        if (records.size() == 0) {
+            return;
+        }
         List<ChangeEvent> events = new ArrayList<>(records.size());
         for (SinkRecord record : records) {
             final Struct value = (Struct) record.value();
@@ -89,6 +94,8 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
                     LOGGER.info("schema change event is omitted");
                     continue;
                 }
+                DatabaseType databaseType = DatabaseType.valueOf(value.getStruct("source")
+                    .getString("connector").toUpperCase(Locale.ROOT));
                 String ddl = value.getString("ddl");
                 TableId tableId = getTableIdentifier(value);
                 event = SchemaChangeEvent.builder()
@@ -97,6 +104,7 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
                     .offset(offset)
                     .partition(partition)
                     .topic(topic)
+                    .databaseType(databaseType)
                     .build();
             } else if (schema.name().endsWith(TRANSACTION_EVENT)) {
                 // transaction event
@@ -119,6 +127,8 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
                 Map<String, Object> beforeValue = getValues(value.getStruct("before"));
                 Map<String, Object> afterValue = getValues(value.getStruct("after"));
                 FieldsMetaData fieldsMetaData = FieldsMetaData.extractFieldsMetaData(record, columnNamingStrategy);
+                DatabaseType databaseType = DatabaseType.valueOf(value.getStruct("source")
+                    .getString("connector").toUpperCase(Locale.ROOT));
                 event = DataChangeEvent.builder()
                     .offset(offset)
                     .partition(partition)
@@ -129,6 +139,7 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
                     .beforeValues(beforeValue)
                     .transactionId(getTransactionId(value))
                     .fieldsMetaData(fieldsMetaData)
+                    .databaseType(databaseType)
                     .build();
             }
             events.add(event);
@@ -141,7 +152,7 @@ public class ChangeEventApplier implements Applier<Collection<SinkRecord>>{
         String catalog = struct.schema().field("db") != null ? struct.getString("db") : null;
         String schema = struct.schema().field("schema") != null ? struct.getString("schema") : null;
         String table = struct.schema().field("table") != null ? struct.getString("table") : null;
-        return new TableId(catalog, schema, tableNamingStrategy.resolveTableName(table));
+        return tableNamingStrategy.resolveTableId(new TableId(catalog, schema, table));
     }
 
     private String getTransactionId(Struct value) {
