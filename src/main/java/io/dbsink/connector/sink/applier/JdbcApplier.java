@@ -10,8 +10,14 @@ import io.dbsink.connector.sink.annotation.ThreadSafe;
 import io.dbsink.connector.sink.connection.JdbcConnection;
 import io.dbsink.connector.sink.context.ConnectorContext;
 import io.dbsink.connector.sink.context.TaskContext;
+import io.dbsink.connector.sink.ddl.converters.ConversionConfiguration;
+import io.dbsink.connector.sink.ddl.converters.ConversionResult;
+import io.dbsink.connector.sink.ddl.converters.ConversionStatus;
+import io.dbsink.connector.sink.ddl.converters.SQLConverter;
+import io.dbsink.connector.sink.ddl.converters.SQLConverters;
 import io.dbsink.connector.sink.dialect.DatabaseDialect;
 import io.dbsink.connector.sink.dialect.DatabaseDialects;
+import io.dbsink.connector.sink.dialect.DatabaseType;
 import io.dbsink.connector.sink.event.ChangeEvent;
 import io.dbsink.connector.sink.event.DataChangeEvent;
 import io.dbsink.connector.sink.event.Operation;
@@ -35,6 +41,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +86,10 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
 
     private final TimeTracker timeTracker;
 
+    private final Map<DatabaseType, SQLConverter> sqlConverters;
+
+    private final ConversionConfiguration conversionConfiguration;
+
     public JdbcApplier(ConnectorContext context, ConnectorConfig config) {
         this.context = context;
         this.config = config;
@@ -87,6 +98,8 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
         this.timeTracker = new TimeTracker();
         this.tableDefinitions = new TableDefinitions(databaseDialect);
         this.jdbcConnection = new JdbcConnection(databaseDialect, config);
+        this.sqlConverters = new HashMap<>();
+        this.conversionConfiguration = new ConversionConfiguration(config.getTableNamingStrategy(), config.getColumnNamingStrategy());
     }
 
     @Override
@@ -126,10 +139,43 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
         this.events.add(event);
     }
 
-    private void handleSchemaChangeEvent(Connection connection, SchemaChangeEvent event) throws SQLException {
+    private void handleSchemaChangeEvent(Connection connection, SchemaChangeEvent event) throws SQLException, ApplierException {
         flush(true);
-        databaseDialect.executeDDL(event.getTableId(), event.getDDL(), connection);
+        TableId tableId = databaseDialect.resolveTableId(event.getTableId());
+        SQLConverter sqlConverter = getSQLConverter(event);
+        ConversionResult result = sqlConverter.convert(event.getDDL());
+        if (result.getStatus() == ConversionStatus.FAILED) {
+            throw new ApplierException("Failed to convert ddl, detail: " + result.getErrors() + "\"");
+        }
+        for (String statement : result.getStatements()) {
+            try {
+                databaseDialect.executeDDL(tableId, statement, connection);
+                connection.commit();
+                LOGGER.info("Succeed to execute ddl '{}'", statement);
+            } catch (SQLException e) {
+                SQLState sqlState = databaseDialect.resolveSQLState(e.getSQLState());
+                if (sqlState == ERR_RELATION_EXISTS_ERROR || sqlState == ERR_RELATION_NOT_EXISTS_ERROR) {
+                    // This kind of SQL exception may be caused by duplicate event consumption.
+                    LOGGER.info("Failed to execute ddl '{}', SQLState: {}. ignore it", statement, sqlState);
+                    connection.rollback();
+                    continue;
+                }
+                throw e;
+            }
+        }
     }
+
+    private SQLConverter getSQLConverter(SchemaChangeEvent event) {
+        DatabaseType sourceType = event.getDatabaseType();
+        DatabaseType targetType = databaseDialect.databaseType();
+        SQLConverter sqlConverter = sqlConverters.get(event.getDatabaseType());
+        if (sqlConverter == null) {
+            sqlConverter = SQLConverters.create(sourceType, targetType, conversionConfiguration);
+            sqlConverters.put(sourceType, sqlConverter);
+        }
+        return sqlConverter;
+    }
+
 
     /**
      * apply the change events {@link ChangeEvent} including schema change events {@link SchemaChangeEvent} and
@@ -158,11 +204,13 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
                     continue;
                 }
                 throw new ApplierException("failed to apply change events", e);
+            } catch (Throwable e) {
+                throw new ApplierException("failed to apply change events", e);
             }
         }
     }
 
-    private void doApply(Collection<ChangeEvent> events) throws SQLException {
+    private void doApply(Collection<ChangeEvent> events) throws SQLException, ApplierException {
         if (events.isEmpty()) {
             return;
         }

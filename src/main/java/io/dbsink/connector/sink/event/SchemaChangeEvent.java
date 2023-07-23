@@ -5,6 +5,7 @@
  */
 package io.dbsink.connector.sink.event;
 
+import io.dbsink.connector.sink.dialect.DatabaseType;
 import io.dbsink.connector.sink.relation.TableId;
 
 /**
@@ -44,6 +45,8 @@ public class SchemaChangeEvent extends ChangeEvent {
         private long offset;
         private Integer partition;
 
+        private DatabaseType databaseType;
+
         private String transactionId;
 
         private Builder() {
@@ -80,6 +83,11 @@ public class SchemaChangeEvent extends ChangeEvent {
             return this;
         }
 
+        public Builder databaseType(DatabaseType databaseType) {
+            this.databaseType = databaseType;
+            return this;
+        }
+
         public SchemaChangeEvent build() {
             SchemaChangeEvent schemaChangeEvent = new SchemaChangeEvent();
             schemaChangeEvent.tableId = this.tableId;
@@ -87,6 +95,7 @@ public class SchemaChangeEvent extends ChangeEvent {
             schemaChangeEvent.ddl = this.ddl;
             schemaChangeEvent.offset = this.offset;
             schemaChangeEvent.topic = this.topic;
+            schemaChangeEvent.databaseType = this.databaseType;
             return schemaChangeEvent;
         }
     }

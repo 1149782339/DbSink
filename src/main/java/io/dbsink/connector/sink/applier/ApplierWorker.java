@@ -76,7 +76,7 @@ public class ApplierWorker extends WorkerThread implements LifeCycle {
         while (context.isRunning()) {
             ApplierEvent applierEvent = applierEvents.take();
             Long sequenceNumber = applierEvent.getSequenceNumber();
-            if (applierEvent.hasDataChangeEvent()) {
+            if (applierEvent.getEvents().size() > 0) {
                 tableApplier.apply(applierEvent.getEvents());
             }
             Long minSequenceNumber = dispatcher.updateSequenceNoAndGet(sequenceNumber);

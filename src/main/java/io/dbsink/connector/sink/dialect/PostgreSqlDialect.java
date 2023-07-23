@@ -110,6 +110,10 @@ public class PostgreSqlDialect extends CommonDatabaseDialect {
     public SQLState resolveSQLState(String sqlState) {
         if ("23505".equals(sqlState)) {
             return SQLState.ERR_DUP_KEY;
+        } else if ("42P07".equals(sqlState)) {
+            return SQLState.ERR_RELATION_EXISTS_ERROR;
+        } else if ("42P01".equals(sqlState)) {
+            return SQLState.ERR_RELATION_NOT_EXISTS_ERROR;
         }
         return super.resolveSQLState(sqlState);
     }
@@ -261,6 +265,11 @@ public class PostgreSqlDialect extends CommonDatabaseDialect {
         final String schema = tableId.getSchema();
         final String table = tableId.getTable();
         return new TableId(null, schema != null ? schema : catalog, table);
+    }
+
+    @Override
+    public DatabaseType databaseType() {
+        return DatabaseType.POSTGRES;
     }
 
     public static class PostgreSqlDialectProvider implements DatabaseDialectProvider {

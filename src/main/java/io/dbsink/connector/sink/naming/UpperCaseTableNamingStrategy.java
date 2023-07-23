@@ -5,7 +5,10 @@
  */
 package io.dbsink.connector.sink.naming;
 
+import io.dbsink.connector.sink.relation.TableId;
+
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Upper case table naming strategy
@@ -23,7 +26,16 @@ public class UpperCaseTableNamingStrategy implements TableNamingStrategy {
      * @time: 2023-06-24
      */
     @Override
-    public String resolveTableName(String table) {
-        return table.toUpperCase(Locale.ROOT);
+    public TableId resolveTableId(TableId tableId) {
+        String catalog = Optional
+            .ofNullable(tableId.getCatalog()).map(item -> item.toUpperCase(Locale.ROOT))
+            .orElse(null);
+        String schema = Optional
+            .ofNullable(tableId.getSchema()).map(item -> item.toUpperCase(Locale.ROOT))
+            .orElse(null);
+        String table = Optional
+            .ofNullable(tableId.getTable()).map(item -> item.toUpperCase(Locale.ROOT))
+            .orElse(null);
+        return new TableId(catalog, schema, table);
     }
 }

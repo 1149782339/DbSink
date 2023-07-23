@@ -171,4 +171,6 @@ public interface DatabaseDialect {
         ColumnDefinition columnDefinition,
         int index
     ) throws SQLException;
+
+    DatabaseType databaseType();
 }

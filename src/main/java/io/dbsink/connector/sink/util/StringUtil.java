@@ -9,6 +9,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.bson.types.Binary;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 /**
  * String util
@@ -18,7 +19,7 @@ import java.nio.ByteBuffer;
  */
 public class StringUtil {
     /**
-     * Quote sql identifier
+     * Quote sql identifier with the specified quote
      *
      * @param identifier sql identifier
      * @param quote      quote
@@ -27,6 +28,97 @@ public class StringUtil {
      */
     public static String quote(String identifier, String quote) {
         return quote + identifier.replace(quote, quote + quote) + quote;
+    }
+
+    /**
+     * Quote sql identifier with the specified quote
+     *
+     * @param identified sql identifier
+     * @param quote      quote
+     * @author Wang Wei
+     * @time: 2023-07-22
+     */
+    public static String quote(String identified, char quote) {
+        if (identified.charAt(0) == quote && identified.charAt(identified.length() - 1) == quote) {
+            return identified;
+        }
+        if (isQuoted(identified)) {
+            identified = unquote(identified);
+        }
+        return quote + identified + quote;
+    }
+
+    /**
+     * Get the quote character of the SQL identifier if possible
+     *
+     * @param identifier SQL identifier
+     * @return the quote character if possible
+     * @author Wang Wei
+     * @time: 2023-07-22
+     */
+    public static Optional<Character> getQuote(String identifier) {
+        if (isQuoted(identifier)) {
+            return Optional.of(identifier.charAt(0));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Remove the quote from a SQL identifier with the specified quote
+     *
+     * @param identifier SQL identifier
+     * @param quote      quote
+     * @return SQL identifier without the quote
+     * @author Wang Wei
+     * @time: 2023-07-22
+     */
+    public static String unquote(String identifier, char quote) {
+        if (identifier.charAt(0) == quote && identifier.charAt(identifier.length() - 1) == quote) {
+            return identifier.substring(1, identifier.length() - 1);
+        }
+        return identifier;
+    }
+
+    /**
+     * Remove the quote from a SQL identifier
+     *
+     * @param identifier SQL identifier
+     * @return SQL identifier without the quote
+     * @author Wang Wei
+     * @time: 2023-07-22
+     */
+    public static String unquote(String identifier) {
+        Optional<Character> optional = getQuote(identifier);
+        if (!optional.isPresent()) {
+            return identifier;
+        }
+        char quota = optional.get();
+        identifier.replace(quota + "" + quota, quota + "");
+        return identifier.substring(1, identifier.length() - 1);
+    }
+
+    /**
+     * judge if a SQL identifier is quoted
+     *
+     * @param identifier
+     * @return if a SQL identifier is quoted
+     * @author Wang Wei
+     * @time: 2023-07-22
+     */
+    public static boolean isQuoted(String identifier) {
+        if (identifier.length() <= 2) {
+            return false;
+        }
+        if (identifier.charAt(0) == '"' && identifier.charAt(identifier.length() - 1) == '"') {
+            return true;
+        }
+        if (identifier.charAt(0) == '`' && identifier.charAt(identifier.length() - 1) == '`') {
+            return true;
+        }
+        if (identifier.charAt(0) == '\'' && identifier.charAt(identifier.length() - 1) == '\'') {
+            return true;
+        }
+        return false;
     }
 
     /**

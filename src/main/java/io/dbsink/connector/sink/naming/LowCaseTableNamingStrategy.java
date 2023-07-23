@@ -5,6 +5,8 @@
  */
 package io.dbsink.connector.sink.naming;
 
+import io.dbsink.connector.sink.relation.TableId;
+
 import java.util.Locale;
 
 /**
@@ -23,7 +25,7 @@ public class LowCaseTableNamingStrategy implements TableNamingStrategy {
      * @time: 2023-06-24
      */
     @Override
-    public String resolveTableName(String table) {
-        return table.toLowerCase(Locale.ROOT);
+    public TableId resolveTableId(TableId tableId) {
+        return null;
     }
 }

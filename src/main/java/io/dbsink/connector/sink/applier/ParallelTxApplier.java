@@ -36,9 +36,6 @@ public class ParallelTxApplier implements Applier<Collection<ChangeEvent>> {
 
     private final ParallelDispatcher dispatcher;
 
-    private final ConnectorContext connectorContext;
-    private final ErrorHandler errorHandler;
-
     private final Map<String, Transaction> transactionMap = new LinkedHashMap<>();
 
     private long lastCommitted;
@@ -49,18 +46,14 @@ public class ParallelTxApplier implements Applier<Collection<ChangeEvent>> {
 
     private WriteSet writeSet = new WriteSet();
 
-    private ConnectorConfig config;
 
     public ParallelTxApplier(
         ConnectorContext connectorContext,
         ErrorHandler errorHandler,
         ConnectorConfig config
     ) {
-        this.connectorContext = connectorContext;
-        this.errorHandler = errorHandler;
         this.lastCommitted = 0L;
         this.sequenceNumber = 1L;
-        this.config = config;
         this.queue = new ArrayBlockingQueue<>(config.getTransactionBufferSize());
         this.dispatcher = new ParallelDispatcher(queue, connectorContext, errorHandler, config);
     }
@@ -102,6 +95,7 @@ public class ParallelTxApplier implements Applier<Collection<ChangeEvent>> {
             }
         } catch (InterruptedException e) {
             LOGGER.warn("InterruptedException");
+            Thread.interrupted();
             throw new ApplierException("failed to apply", e);
         }
     }

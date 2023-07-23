@@ -5,6 +5,8 @@
  */
 package io.dbsink.connector.sink.naming;
 
+import io.dbsink.connector.sink.relation.TableId;
+
 /**
  * Table naming strategy,used to resolve table name in target database
  * from kafka sink record{@link org.apache.kafka.connect.sink.SinkRecord}
@@ -20,5 +22,5 @@ public interface TableNamingStrategy {
      * @author Wang Wei
      * @time: 2023-06-24
      */
-    String resolveTableName(String table);
+    TableId resolveTableId(TableId tableId);
 }

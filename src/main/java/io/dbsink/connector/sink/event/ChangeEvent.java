@@ -5,6 +5,8 @@
  */
 package io.dbsink.connector.sink.event;
 
+import io.dbsink.connector.sink.dialect.DatabaseType;
+
 /**
  * Change Event equivalent to ChangeEvent.
  * See #io.debezium.engine.ChangeEvent
@@ -16,6 +18,8 @@ public abstract class ChangeEvent {
     protected String topic;
     protected long offset;
     protected Integer partition;
+
+    protected DatabaseType databaseType;
 
     public String getTopic() {
         return topic;
@@ -30,4 +34,9 @@ public abstract class ChangeEvent {
     }
 
     public abstract String getTransactionId();
+
+    public DatabaseType getDatabaseType() {
+        return databaseType;
+    }
+
 }
