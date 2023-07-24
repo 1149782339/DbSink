@@ -108,12 +108,22 @@ public class PostgreSqlDialect extends CommonDatabaseDialect {
      */
     @Override
     public SQLState resolveSQLState(String sqlState) {
-        if ("23505".equals(sqlState)) {
+        if ("42601".equals(sqlState)) {
+            return SQLState.ERR_SYNTAX_ERR;
+        } else if ("23505".equals(sqlState)) {
             return SQLState.ERR_DUP_KEY;
+        } else if ("42P06".equals(sqlState)) {
+            return SQLState.ERR_SCHEMA_EXISTS_ERROR;
+        } else if ("3F000".equals(sqlState)) {
+            return SQLState.ERR_SCHEMA_NOT_EXISTS_ERROR;
         } else if ("42P07".equals(sqlState)) {
             return SQLState.ERR_RELATION_EXISTS_ERROR;
         } else if ("42P01".equals(sqlState)) {
             return SQLState.ERR_RELATION_NOT_EXISTS_ERROR;
+        } else if ("42703".equals(sqlState)) {
+            return SQLState.ERR_COLUMN_OF_RELATION_NOT_EXISTS_ERROR;
+        } else if ("42701".equals(sqlState)){
+            return SQLState.ERR_COLUMN_OF_RELATION_EXISTS_ERROR;
         }
         return super.resolveSQLState(sqlState);
     }

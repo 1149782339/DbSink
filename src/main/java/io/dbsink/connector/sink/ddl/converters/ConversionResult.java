@@ -92,6 +92,17 @@ public class ConversionResult {
         return new Builder();
     }
 
+    @Override
+    public String toString() {
+        return "ConversionResult{" +
+            "status=" + status +
+            ", warnings=" + String.join(";", warnings) +
+            ", infos=" + String.join(";", infos) +
+            ", error='" + error + '\'' +
+            ", statements=" + String.join(";", statements) +
+            '}';
+    }
+
     public static class Builder {
         private ConversionStatus status;
         private List<String> warnings;

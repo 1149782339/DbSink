@@ -45,8 +45,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.dbsink.connector.sink.sql.SQLState.ERR_COLUMN_OF_RELATION_EXISTS_ERROR;
+import static io.dbsink.connector.sink.sql.SQLState.ERR_COLUMN_OF_RELATION_NOT_EXISTS_ERROR;
 import static io.dbsink.connector.sink.sql.SQLState.ERR_RELATION_EXISTS_ERROR;
 import static io.dbsink.connector.sink.sql.SQLState.ERR_RELATION_NOT_EXISTS_ERROR;
+import static io.dbsink.connector.sink.sql.SQLState.ERR_SCHEMA_EXISTS_ERROR;
+import static io.dbsink.connector.sink.sql.SQLState.ERR_SCHEMA_NOT_EXISTS_ERROR;
+import static io.dbsink.connector.sink.sql.SQLState.ERR_SYNTAX_ERR;
 
 /**
  * Jdbc applier, execute dml(insert,update,delete,upsert) or ddl
@@ -147,21 +152,26 @@ public class JdbcApplier implements Applier<Collection<ChangeEvent>> {
         if (result.getStatus() == ConversionStatus.FAILED) {
             throw new ApplierException("Failed to convert ddl, detail: " + result.getErrors() + "\"");
         }
-        for (String statement : result.getStatements()) {
-            try {
+        try {
+            for (String statement : result.getStatements()) {
                 databaseDialect.executeDDL(tableId, statement, connection);
-                connection.commit();
-                LOGGER.info("Succeed to execute ddl '{}'", statement);
-            } catch (SQLException e) {
-                SQLState sqlState = databaseDialect.resolveSQLState(e.getSQLState());
-                if (sqlState == ERR_RELATION_EXISTS_ERROR || sqlState == ERR_RELATION_NOT_EXISTS_ERROR) {
-                    // This kind of SQL exception may be caused by duplicate event consumption.
-                    LOGGER.info("Failed to execute ddl '{}', SQLState: {}. ignore it", statement, sqlState);
-                    connection.rollback();
-                    continue;
-                }
-                throw e;
             }
+            connection.commit();
+            LOGGER.info("Succeed to execute ddl '{}'", result);
+        } catch (SQLException e) {
+            SQLState state = databaseDialect.resolveSQLState(e.getSQLState());
+            if (state == ERR_RELATION_EXISTS_ERROR || state == ERR_RELATION_NOT_EXISTS_ERROR
+                || state == ERR_COLUMN_OF_RELATION_EXISTS_ERROR || state == ERR_COLUMN_OF_RELATION_NOT_EXISTS_ERROR
+                || state == ERR_SCHEMA_EXISTS_ERROR || state == ERR_SCHEMA_NOT_EXISTS_ERROR) {
+                // This kind of SQL exception may be caused by duplicate event consumption.
+                LOGGER.info("Failed to execute ddl ({}), SQLState: {}. ignore it", result, state);
+                connection.rollback();
+                return;
+            }
+            if (state == ERR_SYNTAX_ERR) {
+                LOGGER.error("Failed to execute ddl due to syntax error, please check conversion result({})", result);
+            }
+            throw e;
         }
     }
 
